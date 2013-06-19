@@ -2,6 +2,7 @@
   (:use clojure.test)
   (:use q1))
 
+;implementation of the viterbi algorithm for an HMM based tagger
 (defn make-ngram-counts [gcr]
   "returns a map where keys are the ngrams and values are counts for those ngrams
    for e.g. [:I-GENE :O :I-GENE] 3491"
@@ -28,12 +29,6 @@
   (is (< (java.lang.Math/abs (- 0.57785 (q (assoc gd1 :tagseq [:O :I-GENE :I-GENE])))) 0.001))
   (is (< (java.lang.Math/abs (- 0.5949308 (q (assoc gd1 :tagseq [:I-GENE :I-GENE])))) 0.001)))
 
-(q (assoc gd1 :tagseq  [:O :O :STOP]))
-(comment w2 (if (nil? w1)
-             (let [s1 (str "_" (name (q1/getclass word)) "_")
-                   s2 (wordmap s1)]
-               ;(println (str " word " w1 " not found , replacing with " s1 ))
-               s2) w1))
 (defn e [{:keys [word postag wordmap onegram] :as m}]
   "returns emission probability for word"
   (do ;(println (str "inputs to e " word " postag " postag " wordmap word " (wordmap word) " wordmap rare " (wordmap "_RARE_")))
@@ -46,9 +41,6 @@
                s2) w1)]
     (float (/ (get w2 postag 0) (onegram postag))))))
 
-(let [s0 "clean"
-      s1 (str "_" (name (q1/getclass s0)) "_")]
-((:wordmap gd2) s1)) 
 (deftest testemissioncounts
   (let [gcr (q1/read-train-file "D:\\studies\\nlp\\h1-p\\gene.counts.mod1" "\n")
         wordmap (q1/makewordmap gcr)
@@ -74,7 +66,7 @@
   (is (= '([:* :O] [:* :I-GENE]) (bc 1)))
   (is (= '([:O :O] [:O :I-GENE] [:I-GENE :O] [:I-GENE :I-GENE]) (bc 2)))
   )
-
+;test fixture
 (def pistart {:pi-results {[0 :* :*] 1} :k 0 :best-path {} })
 
 (with-test 
@@ -193,10 +185,6 @@
           11 :I-GENE, 12 :I-GENE, 13 :O, 14 :I-GENE}
          (get-y-firstpart {:best-path (:best-path bp1) :y {14 :I-GENE 13 :O} :k 12}))))
 
-(comment
-(count (:best-path tr1)) 
-(filter (fn[[k v]] (= (k 0) 12)) (:pi-results bp1)))
-              
 (with-test
   (defn get-y-stop 
     "returns arguments for calculating y,y-1 "
@@ -237,6 +225,8 @@
                                 :k (- n 2))) ]
     ;(println (str "last 2 " (vec res)))
     resty))
+
+;test fixtures
 
 (def test-sent-3 ["More", "importantly", ",", "this", "fusion", "converted", "a", 
                      "less", "effective", "vaccine","into", "one", "with", 
@@ -281,6 +271,7 @@
                                  (let [g2 (get-y-seq (assoc gramrecord :sentence i :cache pistart))]
                                    (str (clojure.string/join "\n" (map (fn[[x y]] (str x " " y)) g2)) "\n\n")))))))
 
+(comment
 (def gd2 (let [gcr (q1/read-train-file "D:\\studies\\nlp\\h1-p\\gene.counts.mod2" "\n")
       grammap (make-ngram-counts gcr)
       wordmap (q1/makewordmap gcr)
@@ -302,4 +293,4 @@
 (write-dev-output "D:\\studies\\nlp\\h1-p\\gene.test"
                   "D:\\studies\\nlp\\h1-p\\gene_test.p2.out" gd2)
 
-
+)
