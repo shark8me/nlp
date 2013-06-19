@@ -1,4 +1,4 @@
-(ns a4.core
+(ns a4.core2
   (:use clojure.test))
 
 (require '[clojure.data.json :as json])
@@ -15,20 +15,14 @@
 ;with _RARE_, write each sentence out using json.
 ;use the python count_cfg_freq.py to generate counts and submit it.
 
-(def fixt 
+(defn once-fixture [f]
+  (def fixt 
     (let [mydir "D:\\studies\\nlp\\h2.2\\assignment\\" 
           smalltrainfile (str mydir "parse_train_small.dat")
-          trainfile (str mydir "parse_train.dat")
-          ;smallsent (read-train-file smalltrainfile)
-          ]
+          smallsent (read-train-file smalltrainfile)]
     {:smalltrainfile smalltrainfile
-     :trainfile trainfile
-     ;:smallsent smallsent
-     ;:sent1 (first smallsent)
-     }))
-
-(defn once-fixture [f]
-  fixt 
+     :smallsent smallsent
+     :sent1 (first smallsent)}))
   (f))
   
 (use-fixtures :once once-fixture)
@@ -48,18 +42,8 @@
                                                              ["WHNP" ["DET" "which"] ["NOUN" "colony"]]]]]] ["." "?"]]]] 
          (fixt :sent1))))
        
-(def fixt 
-    (let [smallsent (read-train-file (fixt :smalltrainfile))]
-    (assoc fixt
-           :smallsent smallsent
-           :sent1 (first smallsent))))
-
-(defn once-fixture [f]
-  fixt 
-  (f))
-  
-(use-fixtures :once once-fixture)
-
+(run-tests 'a4.core2)
+(comment 
 (with-test
   (defn get-words
     "returns a vector of words, which are leaves in the tree"
@@ -75,7 +59,9 @@
             words)))))
   (is (= ["In" "the" "late" "1700<s" "British" "convicts" 
           "were" "used" "to" "populate" "which" "colony" "?"]
-         (get-words (zip/vector-zip (fixt :sent1))))))
+         (get-words (zip/vector-zip (first 
+                      (read-train-file (str mydir 
+                        "parse_train_small.dat"))))))))
 
 (with-test 
   (defn get-word-frequencies
@@ -84,7 +70,9 @@
     (frequencies 
       (flatten (for [i sentences] (-> i zip/vector-zip get-words)))))
     (is (= 6 
-          ((get-word-frequencies (fixt :smallsent)) "What"))))
+          ((get-word-frequencies 
+             (read-train-file  
+               "D:\\studies\\nlp\\h2.2\\assignment\\parse_train_small.dat")) "What"))))
 
 (with-test
   (defn get-rare-words 
@@ -95,7 +83,9 @@
            (fn [[k v]] (< v 5)) 
            (get-word-frequencies (read-train-file inpfile))))))
   (is (= 47 
-         (count (get-rare-words (fixt :smalltrainfile))))))
+         (count (get-rare-words 
+                  "D:\\studies\\nlp\\h2.2\\assignment\\parse_train_small.dat")))))
+
 
 (defn is-leaf? 
   "returns true if node is a leaf node"
@@ -126,17 +116,18 @@
                                         ["VP" ["VERB" "_RARE_"] 
                                          ["WHNP" ["DET" "which"] ["NOUN" "_RARE_"]]]]]] 
             ["." "?"]]]]
-         (let [rarewords (get-rare-words (fixt :trainfile))
-               s1 (zip/vector-zip (fixt :sent1))]
+         (let [rarewords (get-rare-words 
+                  "D:\\studies\\nlp\\h2.2\\assignment\\parse_train.dat")
+               s1 (zip/vector-zip (first 
+                    (read-train-file 
+                      "D:\\studies\\nlp\\h2.2\\assignment\\parse_train_small.dat")))]
            (change-rare-words s1 rarewords)))))
+)
 
-(run-tests 'a4.core) 
+
+
+;(run- 
 ;generate the output for part 1 of assgn2
-(comment
-  (spit "D:\\studies\\nlp\\h2.2\\assignment\\parse_train_output.dat"
-        (let [tfile (fixt :trainfile)
-              rarewords (get-rare-words tfile)
-              sent (read-train-file tfile)]
-          (clojure.string/join "\n" 
-                               (map #(json/write-str (change-rare-words %1 rarewords))
-                                    (map zip/vector-zip sent))))))
+
+
+  
